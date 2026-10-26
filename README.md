@@ -2,17 +2,15 @@
 
 Multimodal type 2 diabetes risk assessment, early-detection analysis, and genetic analyses.
 
-> **Development status:** This repository is being expanded and reorganized. The existing DenseNet121–XGBoost/TabPFN example is available. The complete analysis workflows, demonstration datasets, pretrained study models, and Docker environments are in preparation.
-
 ## 1. Overview
 
 This project integrates medical imaging, clinical characteristics, and polygenic risk scores (PRS) for type 2 diabetes (T2D) risk assessment.
 
 The repository is organized around three main analysis workflows:
 
-1. **Multimodal prediction:** image preprocessing, DenseNet121 feature extraction, graph neural network (GNN) aggregation of abdominal images, feature integration, and prediction using XGBoost or TabPFN.
+1. **Multimodal prediction:** DenseNet121 feature extraction, graph neural network (GNN) aggregation of images, and prediction using XGBoost or TabPFN.
 2. **Early-detection and survival analysis:** longitudinal data preparation, risk-group assignment, and Cox proportional hazards analysis.
-3. **Genetic analyses:** genome-wide association studies (GWAS), PRS construction, and Mendelian randomization (MR), including sensitivity analyses.
+3. **Genetic analyses:** genome-wide association studies (GWAS), PRS construction, and Mendelian randomization (MR).
 
 The expanded release will include analysis scripts, documented parameters, demonstration datasets, pretrained models where appropriate, intermediate outputs, and example execution logs.
 
