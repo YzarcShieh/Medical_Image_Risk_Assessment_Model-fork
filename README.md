@@ -1,191 +1,232 @@
 # Medical Image Risk Assessment
 
-Multimodal type 2 diabetes risk assessment, early-detection analysis, and genetic analyses.
+Multimodal type 2 diabetes (T2D) risk assessment, early-detection analysis, and genetic analyses.
 
-## 1. Overview
+## Overview
 
-This project integrates medical imaging, clinical characteristics, and polygenic risk scores (PRS) for type 2 diabetes (T2D) risk assessment.
+This repository provides executable research workflows integrating medical images, clinical characteristics, and polygenic risk scores (PRS) for T2D risk assessment.
 
-The repository is organized around three main analysis workflows:
+Three major research components are included:
 
-1. **Multimodal prediction:** DenseNet121 feature extraction, graph neural network (GNN) aggregation of images, and prediction using XGBoost or TabPFN.
-2. **Early-detection and survival analysis:** longitudinal data preparation, risk-group assignment, and Cox proportional hazards analysis.
-3. **Genetic analyses:** genome-wide association studies (GWAS), PRS construction, and Mendelian randomization (MR).
+1. **Multimodal prediction:** DenseNet121 feature extraction, abdominal graph neural network (GNN) aggregation, feature integration, and prediction using XGBoost or TabPFN.
+2. **Early detection:** Longitudinal analysis using Cox proportional hazards models.
+3. **Genetic analysis:** PRS construction, GWAS, Mendelian randomization (MR), and effective independent test estimation.
 
-The expanded release will include analysis scripts, documented parameters, demonstration datasets, pretrained models where appropriate, intermediate outputs, and example execution logs.
+The repository includes demonstration data, Jupyter notebooks, trained model artifacts, and example outputs.
 
-## 2. Analysis workflows
+Demonstration results must not be interpreted as estimates obtained from the original research cohort.
 
-### 2.1 Multimodal prediction
+## Repository structure
 
-The demonstration workflow will start from medical images and tabular inputs and apply the corresponding pretrained models:
+```text
+GitHub/
+├── Demo_data/
+│   ├── 1-1.Sample_information/
+│   ├── 1-2.Sample_image/
+│   └── 1-3.Sample_genotype/
+├── External_data/
+├── Outputs/
+├── model_weights/
+│   ├── Demo-trained_models/
+│   └── Study-trained_models/
+├── docs/
+├── environments/
+├── local_data/
+├── 0.Read_demo_data.ipynb
+├── 1.Step1_PRS_Construction.ipynb
+├── 2-1.Step2_DenseNet_ABD.ipynb
+├── 2-2.Step2_DenseNet_BMD_left_hip.ipynb
+├── 2-3.Step2_DenseNet_BMD_right_hip.ipynb
+├── 2-4.Step2_DenseNet_BMD_spine.ipynb
+├── 3.Step3_GNN.ipynb
+├── 4.Step4_PRS_Integration_and_Feature_Assembly.ipynb
+├── 5-1.Step5_XGBoost.ipynb
+├── 5-2.Step5_TabPFN.ipynb
+├── 6.Step6_Early_Detection.ipynb
+├── 7.Step7_Genetic_Analysis.ipynb
+├── 8.Step8_MR.ipynb
+├── 9.Step9_Independent_Test_Counts.ipynb
+└── README.md
+```
 
-1. Read abdominal (ABD) and bone mineral density (BMD) images.
-2. Apply the preprocessing required by each image model.
-3. Extract image features using modality-specific DenseNet121 models.
-4. Aggregate multiple ABD images from the same participant using the trained GNN.
-5. Retain DenseNet features for the left hip, right hip, and lumbar spine BMD images.
-6. Combine image features with age, sex, family history, and the PRS required by the selected prediction model.
-7. Generate prediction probabilities using XGBoost or TabPFN.
+The `External_data/` and `local_data/` directories are excluded from Git. External software, reference panels, and other required inputs must be obtained separately where applicable.
 
-The full multimodal configuration contains the following predictors:
+## Demonstration workflow
 
-| Feature group | Number of features |
+The multimodal demonstration uses 100 participants with modified demonstration inputs and executes the complete model-training workflow.
+
+The participants are divided into four subsets:
+
+| Dataset | N | Purpose |
+|---|---:|---|
+| Training1 | 32 | Train four modality-specific DenseNet121 models |
+| Training2 | 32 | Train the abdominal GNN and XGBoost; provide TabPFN in-context training data |
+| Validation | 16 | Model selection and validation |
+| Testing | 20 | Final demonstration evaluation |
+
+The workflow includes:
+
+- Abdominal ultrasound (ABD) images
+- Bone mineral density (BMD) images: left hip, right hip, and spine
+- Demographic and clinical characteristics
+- Polygenic risk scores
+- T2D outcome labels
+
+The image and tabular demonstrations are distinct from the original research dataset.
+
+The 100-participant demonstration trains new models. It does not merely apply the study-trained models to the demonstration participants.
+
+## Notebook execution order
+
+| Step | Notebook | Analysis |
+|---|---|---|
+| 0 | `0.Read_demo_data.ipynb` | Read and validate demonstration data |
+| 1 | `1.Step1_PRS_Construction.ipynb` | PRS construction and scoring |
+| 2 | `2-1` through `2-4.Step2_DenseNet_*.ipynb` | Train modality-specific DenseNet121 models |
+| 3 | `3.Step3_GNN.ipynb` | Train the abdominal GNN |
+| 4 | `4.Step4_PRS_Integration_and_Feature_Assembly.ipynb` | Assemble multimodal prediction features |
+| 5 | `5-1.Step5_XGBoost.ipynb` | XGBoost training and evaluation |
+| 5 | `5-2.Step5_TabPFN.ipynb` | TabPFN analysis and evaluation |
+| 6 | `6.Step6_Early_Detection.ipynb` | Early-detection and survival analyses |
+| 7 | `7.Step7_Genetic_Analysis.ipynb` | GWAS demonstration |
+| 8 | `8.Step8_MR.ipynb` | Mendelian randomization |
+| 9 | `9.Step9_Independent_Test_Counts.ipynb` | Effective independent SNP and phenotype tests |
+
+Each notebook documents its corresponding analysis. Outputs are organized under `Outputs/`.
+
+Some analyses require separately acquired external software or reference data.
+
+## Multimodal feature structure
+
+The full multimodal predictor set contains 4,100 features:
+
+| Feature group | Number |
 |---|---:|
 | ABD GNN representation | 1,024 |
-| Left hip BMD DenseNet representation | 1,024 |
-| Right hip BMD DenseNet representation | 1,024 |
-| Lumbar spine BMD DenseNet representation | 1,024 |
+| BMD left hip representation | 1,024 |
+| BMD right hip representation | 1,024 |
+| BMD spine representation | 1,024 |
 | Age, sex, and family history | 3 |
-| One PRS for the selected model configuration | 1 |
+| PRS | 1 |
 | **Total** | **4,100** |
 
-Participant identifiers and outcome labels are not predictors.
+Feature order and preprocessing must remain consistent between model training and inference.
 
-Feature names, ordering, preprocessing, fitted transformations, and PRS selection will be documented for each released model. Training and inference instructions will be provided separately.
+## Trained model artifacts
 
-### 2.2 Early-detection and survival analysis
+Two groups of model artifacts are provided under `model_weights/`.
 
-This workflow will include:
+### Demo-trained_models
 
-- Preparation of the eligible longitudinal cohort.
-- Definition of baseline, follow-up time, events, and censoring.
-- Assignment of risk groups using documented prediction scores and thresholds.
-- Cox proportional hazards analysis.
-- Generation of hazard ratios, confidence intervals, tables, and survival figures.
+These artifacts were generated from the demonstration workflow.
 
-A demonstration dataset with the required follow-up variables will be provided separately. Eligibility for survival analysis will follow the documented baseline and outcome definitions.
+They include trained DenseNet, GNN, XGBoost, and early-detection model files, together with applicable configuration files. TabPFN configuration information is also included.
 
-### 2.3 Genetic analyses
+These demonstration-trained models are separate from the original study models.
 
-The genetic analysis workflow will include:
+### Study-trained_models
 
-- Genotype quality control.
-- Phenotype and covariate preparation.
-- GWAS execution and result processing.
-- Instrument selection and linkage disequilibrium (LD) clumping.
-- Allele harmonization between exposure and outcome summary statistics.
-- MR estimation and sensitivity analyses, including MR-PRESSO.
+The study-model bundle contains:
 
-Demonstration data and execution instructions will be documented separately for GWAS and MR.
+- Four historical modality-specific DenseNet121 checkpoints
+- One historical abdominal GNN/GCN checkpoint
+- A reconstructed M12 XGBoost model using 4,100 features
+- The corresponding `feature_order_4100.json`
 
-### 2.4 PRS construction and integration
+The M12 XGBoost artifact is a verified reconstruction, not the original serialized checkpoint.
 
-Scripts will document the PRS-CSx and JointPRS workflows, including:
+A study-specific TabPFN neural-network checkpoint cannot be provided because standard TabPFN relies on pretrained foundation-model weights and in-context learning rather than generating a separately trained neural-network checkpoint for this dataset.
 
-- External GWAS summary-statistic sources.
-- LD reference panels and ancestry settings.
-- Software versions and analysis parameters.
-- SNP-weight estimation and individual-level scoring.
-- Score combination, standardization, and other transformations.
+Reproducing historical TabPFN predictions additionally requires the appropriate support data and configuration, which are not included as an unrestricted public study dataset.
 
-The multimodal prediction demonstration will read prepared PRS values from a table. It will not require individual-level genotype data.
+Study-trained artifacts are provided separately from the 100-participant demonstration training workflow.
 
-Each prediction model will use the PRS definition and transformations corresponding to its training configuration. Transformation parameters will not be re-estimated from the demonstration participants.
+### Study-trained Cox model (PRS rescaled to 0–1)
 
-## 3. Planned repository structure
+The study-trained Cox proportional hazards model was refitted
+using the original research data with a 0–1 transformation
+of the PRS variable `SCORESUM`.
 
-The following directories will be added as the corresponding workflows are prepared and verified.
+The original serialized model,
+`Cox_SCORESUM01_Model.joblib`, is retained in the private
+research workspace and is **not included in the public
+GitHub release**, because the serialized lifelines object
+contains individual-level training information.
 
-| Location | Description |
-|---|---|
-| `pipelines/prediction/` | Image preprocessing, feature extraction, GNN aggregation, feature integration, training, and inference |
-| `pipelines/survival/` | Longitudinal data preparation, survival analysis, and figures |
-| `pipelines/genetics/gwas/` | Genotype QC, phenotype preparation, and GWAS |
-| `pipelines/genetics/prs/` | PRS-CSx and JointPRS construction, scoring, and transformations |
-| `pipelines/genetics/mr/` | Instrument preparation, MR, and sensitivity analyses |
-| `data/demo/` | Demonstration inputs and data dictionaries |
-| `configs/` | Analysis parameters and model configurations |
-| `models/` | Model descriptions, download instructions, checksums, and feature definitions |
-| `examples/expected_outputs/` | Reference demonstration outputs and execution logs |
-| `docs/` | Detailed documentation and manuscript-result-to-script mappings |
-| `docker/` | Container definitions and execution instructions |
+The accompanying `Cox_SCORESUM01_Scaler.json` is retained
+in `model_weights/Study-trained_models/Cox/` to document
+the PRS scaling configuration. It is not a standalone
+prediction model.
 
-The current root-level scripts implement the earlier image-classification example. They do not yet contain all workflows described above.
+The 100-participant demonstration Cox workflow is provided
+separately in Step 6.
 
-## 4. Data and demonstration datasets
+## Effective independent tests (Step 9)
 
-### Imaging and multimodal demonstration
+Step 9 illustrates the estimation of effective independent test counts.
 
-A 100-participant demonstration dataset is being prepared.
+For genetic variants, the demonstration uses a subset of the provided chromosome 22 genotype data to construct a SNP correlation matrix and perform eigenvalue-based calculations.
 
-The release documentation will describe:
+For phenotypes, fully synthetic, correlated imaging and glycemic traits are generated. Pearson correlation matrices and the Li–Ji method are used to estimate effective test counts.
 
-- Available image modalities and the number of images per participant.
-- Clinical variables and PRS fields.
-- Outcome labels, where applicable.
-- Image modifications and any synthetic or modified tabular values.
-- Input formats and participant-level data correspondence.
+The original study reported:
 
-Modified or synthetic demonstration data are intended to demonstrate workflow execution. Their results should not be interpreted as estimates of performance in the original research cohort.
+| Analysis | Original effective number |
+|---|---:|
+| Genetic variants, KGGSEE/GEC | 768,377.22 |
+| 37 imaging phenotypes | 23 |
+| 40 phenotypes, including T2D, fasting glucose, and HbA1c | 25 |
 
-The existing `example_data/` directory belongs to the earlier image-classification example and is separate from the planned multimodal demonstration.
+The study-wide statistical significance threshold was approximately 2.6 × 10^-9.
 
-### Genetic and survival demonstrations
+The demonstration uses a much smaller set of variants and synthetic phenotypes. Its estimates are not expected to match the original study.
 
-Original participant-level genotype data will not be distributed through this repository.
+The SNP demonstration does not reproduce the complete genome-wide KGGSEE/GEC procedure.
 
-The planned GWAS demonstration will use synthetic genotype and phenotype data. The MR demonstration will use an example exposure–outcome summary-statistic pair with documented provenance and the required LD information.
+## Environment and execution
 
-The survival demonstration dataset will include the variables required by its documented analysis.
+Environment specifications are available in `environments/`:
 
-Access to the original research data remains subject to the relevant data-provider and institutional requirements.
+- `main.yml`
+- `gpu.yml`
+- `prscsx.yml`
+- `jointprs.yml`
+- `mr.yml`
 
-## 5. Pretrained models
+Additional software and hardware requirements are documented in `docs/software_requirements.md`.
 
-Pretrained study-model packages are in preparation.
+Start Jupyter from the repository root and open the relevant notebooks.
 
-Each released package will document:
+For example:
 
-- Model type and analysis version.
-- Required input variables and image modalities.
-- Feature names and ordering.
-- Preprocessing and fitted transformations.
-- Software requirements.
-- Download location and file checksum.
+```bash
+cd /path/to/GitHub
+jupyter lab
+```
 
-The intended packages include modality-specific DenseNet models, the ABD GNN, and the corresponding downstream prediction models.
+Select the environment appropriate for each analysis.
 
-Details of any released survival-model package will be provided with its analysis instructions.
+External GWAS summary statistics, LD reference panels, and PRS software may need to be downloaded and configured separately. Files or symbolic links in the excluded `External_data/` directory are not distributed through Git.
 
-## 6. Installation and quick start
+The presence of recorded demonstration outputs does not guarantee that all notebooks have been validated in a fresh, independent computing environment.
 
-Installation instructions and executable commands for the expanded workflows are in preparation.
+## Data availability and interpretation
 
-Each released workflow will provide:
+The original participant-level research data are not distributed.
 
-1. Environment installation instructions.
-2. Instructions for obtaining its demonstration data and models.
-3. A command to run the demonstration.
-4. Descriptions of intermediate and final outputs.
-5. An example execution log and reference results.
-6. Tested hardware and approximate runtime.
+The repository contains demonstration data prepared for illustrating the analysis workflows. Some example inputs are modified from research inputs, whereas other data are simulated. Their provenance and permitted redistribution must be reviewed before public release.
 
-Docker instructions will be added after the corresponding workflows have been verified.
+Demonstration outputs, fitted models, and genetic association results should not be treated as independent validation of the corresponding manuscript findings.
 
-The existing `requirements_cpu.txt` and `requirements_gpu.txt` apply to the earlier example and are not yet verified environment specifications for the complete study workflows.
+Reproduction of original study estimates may require access to restricted source data and matching historical software configurations.
 
-## 7. Reproducing the study analyses
-
-Documentation will connect each reported analysis or manuscript result to:
-
-- Its analysis script and execution command.
-- The corresponding configuration and software versions.
-- Required input data and model files.
-- Intermediate and final outputs.
-- Execution logs.
-
-Historical analyses and revision analyses will be identified separately.
-
-The public demonstrations will show how the released workflows execute on the supplied example data. Reproducing numerical manuscript results requires the original authorized research data and the matching analysis configuration.
-
-## 8. Citation and contact
-
-The manuscript citation, maintainer contact information, and licensing information will be added before the expanded release.
-
-Relevant software resources:
+## Software references
 
 - [PRS-CSx](https://github.com/getian107/PRScsx)
 - [JointPRS](https://github.com/LeqiXu/JointPRS)
 
-Additional method citations and software acknowledgments will accompany the corresponding analysis modules.
+Additional method-specific references are provided in the analysis notebooks.
+
+## Citation and license
+
+Manuscript citation and repository license information will be finalized before public release.
