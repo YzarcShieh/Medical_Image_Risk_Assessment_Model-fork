@@ -1,15 +1,3 @@
-# Existing fork rules
-__pycache__/
-*.pyc
-.venv/
-output/
-*.pkl
-*.tiff
-.vscode/
-.DS_Store
-Thumbs.db
-
-# Reproducibility release rules
 # ============================================================
 # Private and externally supplied data
 # ============================================================
