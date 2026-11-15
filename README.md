@@ -252,8 +252,6 @@ To ensure consistency between model development and inference, the feature defin
 The corresponding feature extraction and integration procedures are demonstrated in Steps 2–4.
 
 
-
-
 ## Trained Model Artifacts
 
 The repository provides two categories of model artifacts under `model_weights/`: **Demo-trained Models** and **Study-trained Models**. These artifacts serve different purposes and should not be used interchangeably.
@@ -278,11 +276,11 @@ The `model_weights/Study-trained_models/` directory contains selected model arti
 
 | Model | Available artifacts | Description |
 |---|---|---|
-| DenseNet121 | Four pretrained model checkpoints (`.pth`) | Models trained on the original research images for modality-specific feature extraction. |
-| ABD-GNN/GCN | One pretrained model checkpoint (`.pth`) | A model trained to aggregate abdominal ultrasound image features. |
+| DenseNet121 | Four study-trained model checkpoints (`.pth`) | Models trained on the original research images for modality-specific feature extraction. |
+| ABD-GNN/GCN | One study-trained model checkpoint (`.pth`) | A model trained to aggregate abdominal ultrasound image features. |
 | XGBoost (M12) | `M12_XGBoost.json` | A reconstructed version of the study-trained XGBoost model using 4,100 input features. |
 | Feature configuration | `feature_order_4100.json` | The feature names and ordering required for applying the reconstructed XGBoost model. |
-| Cox Proportional Hazards | `Cox_SCORESUM01_Scaler.json` | The PRS scaling configuration associated with the study-trained Cox model; not a standalone prediction model. |
+| Cox Proportional Hazards | `Cox_SCORESUM01_Scaler.json` | PRS scaling parameters used in the study-trained Cox model (provided separately from the serialized model). |
 
 The DenseNet121 and ABD-GNN/GCN checkpoints were obtained from the original study-trained models. In contrast, the M12 XGBoost artifact is a reconstructed model rather than the original serialized checkpoint.
 
@@ -292,7 +290,109 @@ When applying these models to new data, users must preserve the corresponding in
 
 **TabPFN:** A study-specific TabPFN checkpoint cannot be provided because standard TabPFN relies on pretrained foundation-model weights and in-context learning rather than generating a separately trained neural-network checkpoint for the study dataset. Reproducing the original study predictions also requires the corresponding support data and model configurations, which are not fully available for public distribution.
 
-**Cox proportional hazards model:** The study-trained Cox model was refitted using the original research data with a 0–1 transformation of the PRS variable `SCORESUM`. However, the serialized model (`Cox_SCORESUM01_Model.joblib`) contains individual-level training information and is therefore not distributed in this repository. The corresponding PRS scaling configuration is provided separately.
+**Cox proportional hazards model:** The study-trained Cox model was refitted using the original research data after applying a 0–1 transformation to the PRS variable `SCORESUM`. The corresponding scaling parameters are provided in `model_weights/Study-trained_models/Cox/Cox_SCORESUM01_Scaler.json` to document the preprocessing procedure used in the original study.
+
+However, the serialized Cox model (`Cox_SCORESUM01_Model.joblib`) contains individual-level training information and is therefore not included in the public repository. The provided scaling parameters do not constitute a standalone prediction model.
+
+The study-trained model artifacts are intended to support further model application and evaluation where the necessary input data and configurations are available. They are distinct from the models trained using the 100-participant demonstration dataset.
+separately.
 
 The study-trained model artifacts are intended to support further model application and evaluation where the necessary input data and configurations are available. They are distinct from the models trained using the 100-participant demonstration dataset.
 
+
+
+
+## Effective Independent Tests
+
+To account for multiple testing across correlated genetic variants and phenotypes, the original study estimated the effective numbers of independent tests rather than treating all tests as statistically independent.
+
+### Original Study
+
+The effective number of independent genetic tests was estimated using KGGSEE/GEC, accounting for linkage disequilibrium (LD) among genetic variants.
+
+For correlated phenotypes, the effective number of independent tests was estimated using an eigenvalue-based approach.
+
+The original study obtained the following results:
+
+| Analysis component | Number of variables | Effective independent tests |
+|---|---:|---:|
+| Genetic variants | Genome-wide SNPs | 768,377.22 |
+| Imaging-derived phenotypes | 37 | 23 |
+| Imaging and glycemic phenotypes | 40 | 25 |
+
+The 40 phenotypes comprised 37 imaging-derived phenotypes and three additional traits: T2D, fasting glucose, and HbA1c.
+
+Based on the effective numbers of genetic and phenotypic tests, the study-wide significance threshold was calculated as:
+
+\[
+\alpha = \frac{0.05}{768,377.22 \times 25}
+\approx 2.6 \times 10^{-9}
+\]
+
+This threshold was used to account for multiple testing across genetic variants and phenotypes in the original study.
+
+### Demonstration Analysis (Step 9)
+
+The notebook `9.Step9_Independent_Test_Counts.ipynb` demonstrates the estimation of effective independent tests using example data.
+
+The demonstration includes two components:
+
+1. **Genetic variants:** A subset of chromosome 22 SNPs from the demonstration PLINK dataset is used to calculate an LD correlation matrix, perform eigenvalue decomposition, and estimate the effective number of genetic tests.
+
+2. **Correlated phenotypes:** Synthetic imaging-derived and glycemic phenotypes are generated to demonstrate correlation matrix construction and the Li–Ji (2005) eigenvalue-based method for estimating effective independent phenotype tests.
+
+The demonstration produces effective test estimates and corresponding multiple-testing thresholds using the example datasets.
+
+Importantly, the demonstration uses only a limited SNP subset and synthetic phenotypes. It does not reproduce the original genome-wide KGGSEE/GEC analysis or the original study's phenotype correlation structure.
+
+The original study's significance threshold of approximately \(2.6 \times 10^{-9}\) is therefore provided as a reference and should not be confused with the threshold calculated from the demonstration data.
+
+Example outputs are available in `Outputs/Step9_Independent_Test_Counts/`.
+
+
+
+## Data Availability and Reproducibility
+
+### Original Research Data
+
+The original study was conducted using data from the Taiwan Biobank (TWB). Due to data access and privacy restrictions, the original participant-level genetic, medical imaging, and clinical data are not publicly distributed through this repository.
+
+Access to the original research data is subject to the relevant data access procedures, institutional approvals, and data-use agreements. Consequently, reproducing the exact numerical findings of the original study requires access to the corresponding research datasets.
+
+### Demonstration Data and External Resources
+
+To facilitate the examination and execution of the analytical workflows, this repository provides a demonstration dataset comprising 100 participants, organized into predefined training, validation, and testing subsets.
+
+The demonstration includes example medical images, demographic and clinical characteristics, simulated genetic data, and T2D outcome information. Some demonstration inputs are modified from research inputs, while others are simulated. These data are intended to illustrate the analytical procedures rather than reproduce the original study population or its statistical results.
+
+Additional external resources are required for certain analyses:
+
+- **Step 1 (PRS Construction):** External GWAS summary statistics and linkage disequilibrium (LD) reference data must be prepared under `External_data/`.
+- **Step 8 (Mendelian Randomization):** GWAS summary statistics and an LD reference panel must be prepared under `local_data/Step8_MR/`.
+
+These external datasets and reference resources are not distributed with the repository. Users are responsible for obtaining the required resources from their respective providers and complying with applicable data-use conditions.
+
+The original study's Taiwan Biobank-derived LD reference data are not publicly distributed.
+
+### Computational Reproducibility and Interpretation
+
+The repository provides Jupyter notebooks, Conda environment specifications, demonstration data, selected study-trained model artifacts, and example outputs to facilitate examination and reproduction of the computational workflows.
+
+The environment configuration files are available in `environments/`, and additional software requirements are documented in `docs/software_requirements.md`.
+
+Although the notebooks contain executable analytical procedures and example outputs, successful execution may depend on external reference resources, software dependencies, hardware compatibility, and computational configurations. The complete repository has not been independently validated in every supported computing environment.
+
+In addition, differences in demonstration inputs, random initialization, software versions, and computational environments may lead to results that differ from the provided example outputs.
+
+**The primary purpose of this repository is to demonstrate the computational methodology and model-development workflows.** Results generated using the demonstration data should not be interpreted as independent validation or exact reproduction of the original study findings.
+
+Reproducing the original study's numerical results may require access to restricted research data and the corresponding historical analysis configurations.
+
+## Citation
+
+If you use the code, computational workflows, or model artifacts
+provided in this repository, please cite the associated research
+publication.
+
+Citation details and the repository DOI will be updated upon
+publication and release.
